@@ -15,11 +15,8 @@ import java.util.List;
 @Data
 public class ArticleProfile {
 
-    /**
-     * 文章长度等级
-     */
     public enum LengthLevel {
-        /** ≤2000字 */
+        /** <=2000字 */
         SHORT,
         /** 2000~8000字 */
         MEDIUM,
@@ -27,9 +24,6 @@ public class ArticleProfile {
         LONG
     }
 
-    /**
-     * 文章类型（规则推断）
-     */
     public enum ArticleType {
         /** 含代码块的教程/实战 */
         TUTORIAL,
@@ -45,20 +39,34 @@ public class ArticleProfile {
     private LengthLevel lengthLevel;
     private ArticleType articleType;
     private boolean hasCodeBlocks;
+    private int codeBlockCount;
     private int paragraphCount;
     private List<String> paragraphs;
 
-    /**
-     * 是否需要分段摘要（长文章）
-     */
+    /** 是否需要分段摘要（长文章） */
     public boolean needsChunkedSummary() {
         return lengthLevel == LengthLevel.LONG;
     }
 
-    /**
-     * 是否需要生成 codeOrSteps 字段
-     */
+    /** 是否需要生成 codeOrSteps 字段 */
     public boolean needsCodeSteps() {
         return hasCodeBlocks || articleType == ArticleType.TUTORIAL;
+    }
+
+    /** 是否需要生成 risksOrPitfalls 字段 */
+    public boolean needsRisks() {
+        return articleType == ArticleType.TUTORIAL;
+    }
+
+    /** 获取文章类型的中文描述（用于 PLAN prompt） */
+    public String getArticleTypeDesc() {
+        switch (articleType) {
+            case TUTORIAL:
+                return "含代码的技术教程（" + codeBlockCount + "个代码块）";
+            case ANALYSIS:
+                return "概念分析/原理讲解";
+            default:
+                return "通用技术文章";
+        }
     }
 }

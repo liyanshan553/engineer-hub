@@ -14,21 +14,42 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class ArticleSummaryDao extends ServiceImpl<ArticleSummaryMapper, ArticleSummaryDO> {
 
-    /**
-     * 根据文章ID查询总结
-     */
     public ArticleSummaryDO getByArticleId(Long articleId) {
         return lambdaQuery()
                 .eq(ArticleSummaryDO::getArticleId, articleId)
                 .one();
     }
 
-    /**
-     * 根据文章ID更新总结内容
-     */
     public boolean updateByArticleId(ArticleSummaryDO summaryDO) {
         return lambdaUpdate()
                 .eq(ArticleSummaryDO::getArticleId, summaryDO.getArticleId())
                 .update(summaryDO);
+    }
+
+    /**
+     * 原子更新状态（CAS：仅当前状态匹配时才更新）
+     *
+     * @param articleId  文章ID
+     * @param fromStatus 期望的当前状态
+     * @param toStatus   目标状态
+     * @return 是否更新成功
+     */
+    public boolean casUpdateStatus(Long articleId, int fromStatus, int toStatus) {
+        return lambdaUpdate()
+                .eq(ArticleSummaryDO::getArticleId, articleId)
+                .eq(ArticleSummaryDO::getStatus, fromStatus)
+                .set(ArticleSummaryDO::getStatus, toStatus)
+                .update();
+    }
+
+    /**
+     * 标记失败并记录原因
+     */
+    public boolean markFailed(Long articleId, String failReason) {
+        return lambdaUpdate()
+                .eq(ArticleSummaryDO::getArticleId, articleId)
+                .set(ArticleSummaryDO::getStatus, -1)
+                .set(ArticleSummaryDO::getFailReason, failReason)
+                .update();
     }
 }

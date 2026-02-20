@@ -64,10 +64,12 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
                 return dto;
             }
             if (record.getStatus() == 0) {
-                // 正在生成中
-                return buildGeneratingDTO(articleId);
+                return ArticleSummaryDTO.generating(articleId);
             }
-            // status=-1 失败：允许重新触发
+            if (record.getStatus() == -1) {
+                // 失败：返回失败 DTO，允许前端展示重试按钮
+                return ArticleSummaryDTO.failed(articleId, record.getFailReason());
+            }
         }
 
         // === 第三层：触发异步生成 ===
@@ -76,17 +78,40 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
 
     @Override
     public void regenerate(Long articleId) {
-        // 删除缓存
-        RedisClient.del(CACHE_KEY_PREFIX + articleId);
+        String lockKey = LOCK_KEY_PREFIX + articleId;
 
-        // 删除旧记录
-        ArticleSummaryDO existing = summaryDao.getByArticleId(articleId);
-        if (existing != null) {
-            summaryDao.removeById(existing.getId());
+        // 用 SETNX 保证 regenerate 也不会并发
+        Boolean locked = RedisClient.setNx(lockKey, "1", LOCK_TTL_SECONDS);
+        if (!Boolean.TRUE.equals(locked)) {
+            log.info("regenerate 时锁已被持有，跳过, articleId={}", articleId);
+            return;
         }
 
-        // 触发重新生成
-        triggerGenerate(articleId, null);
+        try {
+            // 删除缓存
+            RedisClient.del(CACHE_KEY_PREFIX + articleId);
+
+            // 将现有记录状态重置为 0（生成中），而非删除再插入
+            ArticleSummaryDO existing = summaryDao.getByArticleId(articleId);
+            if (existing != null) {
+                existing.setStatus(0);
+                existing.setFailReason("");
+                existing.setVersion(existing.getVersion() + 1);
+                summaryDao.updateByArticleId(existing);
+            } else {
+                ArticleSummaryDO placeholder = new ArticleSummaryDO();
+                placeholder.setArticleId(articleId);
+                placeholder.setStatus(0);
+                placeholder.setVersion(1);
+                summaryDao.save(placeholder);
+            }
+
+            // 异步执行
+            doAsyncGenerate(articleId, lockKey);
+        } catch (Exception e) {
+            RedisClient.del(lockKey);
+            throw e;
+        }
     }
 
     /**
@@ -98,56 +123,61 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
         // Redis SETNX 分布式锁
         Boolean locked = RedisClient.setNx(lockKey, "1", LOCK_TTL_SECONDS);
         if (!Boolean.TRUE.equals(locked)) {
-            // 有其他请求正在生成
             log.info("文章总结正在生成中（锁已被持有），articleId={}", articleId);
-            return buildGeneratingDTO(articleId);
+            return ArticleSummaryDTO.generating(articleId);
         }
 
         try {
             // 先写一条 status=0 的占位记录
-            if (existing == null || existing.getStatus() == -1) {
-                if (existing != null) {
-                    existing.setStatus(0);
-                    summaryDao.updateByArticleId(existing);
-                } else {
-                    ArticleSummaryDO placeholder = new ArticleSummaryDO();
-                    placeholder.setArticleId(articleId);
-                    placeholder.setStatus(0);
-                    placeholder.setVersion(1);
-                    summaryDao.save(placeholder);
-                }
+            if (existing == null) {
+                ArticleSummaryDO placeholder = new ArticleSummaryDO();
+                placeholder.setArticleId(articleId);
+                placeholder.setStatus(0);
+                placeholder.setVersion(1);
+                summaryDao.save(placeholder);
+            } else if (existing.getStatus() == -1) {
+                existing.setStatus(0);
+                existing.setFailReason("");
+                summaryDao.updateByArticleId(existing);
             }
 
-            // 异步执行 AI Agent
-            AsyncUtil.execute(() -> {
-                try {
-                    log.info("开始异步生成文章总结, articleId={}", articleId);
-                    ArticleSummaryDTO result = agentService.generateSummary(articleId);
-
-                    // 更新 MySQL：写入总结内容，status=1
-                    updateRecord(articleId, result);
-
-                    // 写入 Redis 缓存
-                    String cacheKey = CACHE_KEY_PREFIX + articleId;
-                    RedisClient.setStrWithExpire(cacheKey, JsonUtil.toStr(result), CACHE_TTL_SECONDS);
-
-                    log.info("文章总结生成成功, articleId={}", articleId);
-                } catch (Exception e) {
-                    log.error("文章总结生成失败, articleId={}", articleId, e);
-                    // 标记失败
-                    markFailed(articleId);
-                } finally {
-                    // 释放锁
-                    RedisClient.del(lockKey);
-                }
-            });
-
-            return buildGeneratingDTO(articleId);
+            doAsyncGenerate(articleId, lockKey);
+            return ArticleSummaryDTO.generating(articleId);
         } catch (Exception e) {
-            // 异常时释放锁
             RedisClient.del(lockKey);
             throw e;
         }
+    }
+
+    /**
+     * 异步执行 AI Agent 生成
+     */
+    private void doAsyncGenerate(Long articleId, String lockKey) {
+        AsyncUtil.execute(() -> {
+            try {
+                log.info("开始异步生成文章总结, articleId={}", articleId);
+                ArticleSummaryDTO result = agentService.generateSummary(articleId);
+                result.ensureNonNull();
+
+                // 更新 MySQL：写入总结内容，status=1
+                updateRecord(articleId, result);
+
+                // 写入 Redis 缓存
+                String cacheKey = CACHE_KEY_PREFIX + articleId;
+                RedisClient.setStrWithExpire(cacheKey, JsonUtil.toStr(result), CACHE_TTL_SECONDS);
+
+                log.info("文章总结生成成功, articleId={}", articleId);
+            } catch (Exception e) {
+                log.error("文章总结生成失败, articleId={}", articleId, e);
+                String reason = e.getMessage();
+                if (reason != null && reason.length() > 450) {
+                    reason = reason.substring(0, 450);
+                }
+                summaryDao.markFailed(articleId, reason != null ? reason : "未知错误");
+            } finally {
+                RedisClient.del(lockKey);
+            }
+        });
     }
 
     private void updateRecord(Long articleId, ArticleSummaryDTO dto) {
@@ -162,16 +192,10 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
         record.setCodeOrSteps(dto.getCodeOrSteps());
         record.setRisksOrPitfalls(dto.getRisksOrPitfalls());
         record.setCitations(dto.getCitations());
+        record.setModelName(dto.getModelName());
         record.setStatus(1);
+        record.setFailReason("");
         summaryDao.updateByArticleId(record);
-    }
-
-    private void markFailed(Long articleId) {
-        ArticleSummaryDO record = summaryDao.getByArticleId(articleId);
-        if (record != null) {
-            record.setStatus(-1);
-            summaryDao.updateByArticleId(record);
-        }
     }
 
     private ArticleSummaryDTO convertToDTO(ArticleSummaryDO record) {
@@ -184,14 +208,10 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
         dto.setCodeOrSteps(record.getCodeOrSteps());
         dto.setRisksOrPitfalls(record.getRisksOrPitfalls());
         dto.setCitations(record.getCitations());
+        dto.setModelName(record.getModelName());
+        dto.setVersion(record.getVersion());
         dto.setStatus(record.getStatus());
-        return dto;
-    }
-
-    private ArticleSummaryDTO buildGeneratingDTO(Long articleId) {
-        ArticleSummaryDTO dto = new ArticleSummaryDTO();
-        dto.setArticleId(articleId);
-        dto.setStatus(0);
+        dto.ensureNonNull();
         return dto;
     }
 }

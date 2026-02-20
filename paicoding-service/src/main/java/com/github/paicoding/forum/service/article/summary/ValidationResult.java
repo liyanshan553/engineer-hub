@@ -31,9 +31,34 @@ public class ValidationResult {
     /** 是否需要重新生成 citations */
     private boolean citationsNeedRefine;
 
+    /** 是否需要重新生成 keyTerms */
+    private boolean keyTermsNeedRefine;
+
     public void addIssue(String issue) {
         this.issues.add(issue);
         this.passed = false;
+    }
+
+    public boolean hasRefineTarget() {
+        return tldrNeedsRefine || highlightsNeedRefine || citationsNeedRefine || keyTermsNeedRefine;
+    }
+
+    /** 生成面向 LLM 的修复指令摘要 */
+    public String toRefineInstruction() {
+        StringBuilder sb = new StringBuilder();
+        if (tldrNeedsRefine) {
+            sb.append("- 请重新生成 tldr，控制在1~2句话内（不超过200字）\n");
+        }
+        if (highlightsNeedRefine) {
+            sb.append("- 请重新生成 highlights，确保有3~6条要点，每条不超过30字\n");
+        }
+        if (citationsNeedRefine) {
+            sb.append("- 请重新生成 citations，text 必须是文章中【逐字出现】的原文片段，不可有任何改动\n");
+        }
+        if (keyTermsNeedRefine) {
+            sb.append("- 请重新生成 key_terms，每项必须有 term 和 explanation 字段\n");
+        }
+        return sb.toString();
     }
 
     public static ValidationResult pass() {

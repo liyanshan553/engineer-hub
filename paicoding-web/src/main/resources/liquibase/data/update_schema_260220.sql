@@ -12,10 +12,13 @@ CREATE TABLE IF NOT EXISTS `article_summary` (
     `code_or_steps`      TEXT          COMMENT '代码步骤JSON数组',
     `risks_or_pitfalls`  TEXT          COMMENT '坑点/注意事项JSON数组',
     `citations`          TEXT          COMMENT '引用锚点JSON数组 [{text,anchor}]',
+    `model_name`         VARCHAR(64)   NOT NULL DEFAULT '' COMMENT '生成所用模型名称',
+    `fail_reason`        VARCHAR(500)  NOT NULL DEFAULT '' COMMENT '失败原因',
     `version`            INT           NOT NULL DEFAULT 1 COMMENT '总结版本号',
     `status`             TINYINT       NOT NULL DEFAULT 0 COMMENT '0-生成中 1-正常 -1-失败',
     `create_time`        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `update_time`        TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_article_id` (`article_id`)
+    UNIQUE KEY `uk_article_id` (`article_id`),
+    KEY `idx_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文章AI总结';

@@ -42,6 +42,12 @@ public class ArticleSummaryDO extends BaseDO {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<ArticleSummaryDTO.CitationDTO> citations;
 
+    /** 生成所用模型名称 */
+    private String modelName;
+
+    /** 失败原因 */
+    private String failReason;
+
     private Integer version;
 
     /**

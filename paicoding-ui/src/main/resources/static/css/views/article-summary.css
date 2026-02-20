@@ -36,6 +36,7 @@
     font-size: 13px;
     cursor: pointer;
     transition: opacity 0.2s;
+    white-space: nowrap;
 }
 
 .ai-summary-card .summary-trigger-btn:hover {
@@ -49,6 +50,11 @@
 
 .ai-summary-card .summary-trigger-btn .btn-icon {
     font-size: 14px;
+}
+
+.ai-summary-card .summary-trigger-btn .btn-arrow {
+    font-size: 10px;
+    margin-left: 4px;
 }
 
 /* 生成中状态 */
@@ -68,6 +74,12 @@
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin-bottom: 8px;
+}
+
+.ai-summary-card .summary-generating-hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 4px;
 }
 
 @keyframes spin {
@@ -90,7 +102,7 @@
 }
 
 .ai-summary-card .summary-section-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #667eea;
     text-transform: uppercase;
@@ -176,9 +188,26 @@
 }
 
 .ai-summary-card .risk-list li {
-    padding: 3px 0;
+    position: relative;
+    padding: 3px 0 3px 18px;
     font-size: 13px;
     color: #e67e22;
+}
+
+.ai-summary-card .risk-list li::before {
+    content: '!';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    width: 14px;
+    height: 14px;
+    background: #e67e22;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 14px;
 }
 
 /* 引用列表 */
@@ -210,12 +239,37 @@
     color: #aaa;
 }
 
+/* 引用高亮动画（文章正文中） */
+.citation-highlight {
+    background-color: #fff3cd !important;
+    transition: background-color 0.3s ease-in;
+}
+
+/* AI 声明 */
+.ai-summary-card .summary-disclaimer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 11px;
+    color: #bbb;
+    text-align: center;
+}
+
 /* 失败状态 */
 .ai-summary-card .summary-failed {
     text-align: center;
     padding: 16px 0;
     color: #999;
     font-size: 13px;
+}
+
+.ai-summary-card .summary-fail-reason {
+    font-size: 11px;
+    color: #ccc;
+    margin-top: 4px;
+    word-break: break-all;
+    max-height: 40px;
+    overflow: hidden;
 }
 
 .ai-summary-card .summary-retry-btn {
@@ -231,4 +285,37 @@
 
 .ai-summary-card .summary-retry-btn:hover {
     background: #f8f7ff;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .ai-summary-card .widget {
+        padding: 12px;
+        border-radius: 0;
+    }
+
+    .ai-summary-card .summary-trigger-btn {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .ai-summary-card .summary-tldr {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .ai-summary-card .summary-section-title {
+        font-size: 10px;
+    }
+
+    .ai-summary-card .summary-highlights li,
+    .ai-summary-card .summary-steps li,
+    .ai-summary-card .risk-list li {
+        font-size: 12px;
+    }
+
+    .ai-summary-card .term-tag {
+        font-size: 11px;
+        padding: 1px 6px;
+    }
 }
