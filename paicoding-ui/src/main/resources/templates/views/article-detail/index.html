@@ -5,11 +5,13 @@
   </div>
 
   <link rel="stylesheet" href="/css/views/article-detail.css" th:href="${global.siteInfo.oss + '/css/views/article-detail.css'}" />
+  <link rel="stylesheet" href="/css/views/article-summary.css" th:href="${global.siteInfo.oss + '/css/views/article-summary.css'}" />
   <script src="/js/marked.min.js" th:src="${global.siteInfo.oss + '/js/marked.min.js'}"></script>
   <script src="/js/biz/selection.js" th:src="${global.siteInfo.oss + '/js/biz/selection.js'}"></script>
   <script src="/js/biz/highlightcomment.js" th:src="${global.siteInfo.oss + '/js/biz/highlightcomment.js'}"></script>
   <script src="/js/biz/ai-comment.js" th:src="${global.siteInfo.oss + '/js/biz/ai-comment.js'}"></script>
   <script src="/js/biz/comment-markdown.js" th:src="${global.siteInfo.oss + '/js/biz/comment-markdown.js'}"></script>
+  <script src="/js/biz/article-summary.js" th:src="${global.siteInfo.oss + '/js/biz/article-summary.js'}"></script>
 
   <body id="body" class="bg-color">
     <!-- 导航栏 -->
@@ -51,6 +53,19 @@
             <div
               th:replace="components/user/user-card :: user_card(${vo.author}, ${vo.article.author}, ${global.isLogin})"
             ></div>
+
+            <!-- AI 总结卡片 -->
+            <div id="aiSummaryCard" class="right-container ai-summary-card">
+              <div class="widget">
+                <div class="summary-header">
+                  <h3>AI 总结</h3>
+                  <button id="summaryTriggerBtn" type="button" class="summary-trigger-btn">
+                    <span class="btn-icon">&#x2728;</span> 生成总结
+                  </button>
+                </div>
+                <div id="summaryContent"></div>
+              </div>
+            </div>
 
             <!-- 活动推荐 -->
             <div th:if="${!#lists.isEmpty(vo.sideBarItems)}">

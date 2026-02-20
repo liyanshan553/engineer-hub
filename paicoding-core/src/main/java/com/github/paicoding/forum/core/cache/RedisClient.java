@@ -125,6 +125,25 @@ public class RedisClient {
     }
 
     /**
+     * 分布式锁：SET key value NX EX expireSeconds
+     *
+     * @param key           锁的key
+     * @param value         锁的value（用于标识持有者）
+     * @param expireSeconds 过期时间（秒），兜底防死锁
+     * @return true=获取锁成功，false=锁已被持有
+     */
+    public static Boolean setNx(String key, String value, Long expireSeconds) {
+        return template.execute((RedisCallback<Boolean>) con -> {
+            // setNX：仅当 key 不存在时设置
+            Boolean result = con.setNX(keyBytes(key), valBytes(value));
+            if (Boolean.TRUE.equals(result)) {
+                con.expire(keyBytes(key), expireSeconds);
+            }
+            return result;
+        });
+    }
+
+    /**
      * 设置缓存有效期
      *
      * @param key

@@ -1,0 +1,234 @@
+/* 文章AI总结卡片样式 */
+.ai-summary-card {
+    margin-bottom: 16px;
+}
+
+.ai-summary-card .widget {
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.ai-summary-card .summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.ai-summary-card .summary-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+}
+
+.ai-summary-card .summary-trigger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.ai-summary-card .summary-trigger-btn:hover {
+    opacity: 0.9;
+}
+
+.ai-summary-card .summary-trigger-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ai-summary-card .summary-trigger-btn .btn-icon {
+    font-size: 14px;
+}
+
+/* 生成中状态 */
+.ai-summary-card .summary-generating {
+    text-align: center;
+    padding: 24px 0;
+    color: #999;
+    font-size: 13px;
+}
+
+.ai-summary-card .summary-generating .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e0e0e0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* 总结内容区域 */
+.ai-summary-card .summary-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #444;
+}
+
+.ai-summary-card .summary-section {
+    margin-bottom: 14px;
+}
+
+.ai-summary-card .summary-section:last-child {
+    margin-bottom: 0;
+}
+
+.ai-summary-card .summary-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #667eea;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* TLDR */
+.ai-summary-card .summary-tldr {
+    background: #f8f7ff;
+    border-left: 3px solid #667eea;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+    color: #333;
+}
+
+/* 要点列表 */
+.ai-summary-card .summary-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ai-summary-card .summary-highlights li {
+    position: relative;
+    padding: 3px 0 3px 16px;
+    font-size: 13px;
+}
+
+.ai-summary-card .summary-highlights li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 6px;
+    height: 6px;
+    background: #667eea;
+    border-radius: 50%;
+}
+
+/* 术语标签 */
+.ai-summary-card .term-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ai-summary-card .term-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #f0eeff;
+    color: #5a4fcf;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: help;
+    transition: background 0.2s;
+}
+
+.ai-summary-card .term-tag:hover {
+    background: #e0dcff;
+}
+
+/* 步骤列表 */
+.ai-summary-card .summary-steps {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.ai-summary-card .summary-steps li {
+    padding: 2px 0;
+    font-size: 13px;
+}
+
+/* 注意事项 */
+.ai-summary-card .risk-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ai-summary-card .risk-list li {
+    padding: 3px 0;
+    font-size: 13px;
+    color: #e67e22;
+}
+
+/* 引用列表 */
+.ai-summary-card .citation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ai-summary-card .citation-list li {
+    padding: 3px 0;
+    font-size: 12px;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ai-summary-card .citation-list li:hover {
+    color: #667eea;
+}
+
+.ai-summary-card .citation-list li::before {
+    content: '[';
+    color: #aaa;
+}
+
+.ai-summary-card .citation-list li::after {
+    content: ']';
+    color: #aaa;
+}
+
+/* 失败状态 */
+.ai-summary-card .summary-failed {
+    text-align: center;
+    padding: 16px 0;
+    color: #999;
+    font-size: 13px;
+}
+
+.ai-summary-card .summary-retry-btn {
+    margin-top: 8px;
+    padding: 4px 16px;
+    background: #fff;
+    color: #667eea;
+    border: 1px solid #667eea;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ai-summary-card .summary-retry-btn:hover {
+    background: #f8f7ff;
+}
