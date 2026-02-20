@@ -33,8 +33,8 @@ public class ArticleSummaryServiceImpl implements ArticleSummaryService {
     private static final String LOCK_KEY_PREFIX = "article.summary.lock:";
     /** 缓存过期时间 24h */
     private static final long CACHE_TTL_SECONDS = 86400L;
-    /** 分布式锁过期时间 120s（兜底防死锁） */
-    private static final long LOCK_TTL_SECONDS = 120L;
+    /** 分布式锁过期时间 300s（Agent 包含多轮 LLM 调用 + 可能的 REFINE 回路） */
+    private static final long LOCK_TTL_SECONDS = 300L;
 
     @Autowired
     private ArticleSummaryDao summaryDao;
