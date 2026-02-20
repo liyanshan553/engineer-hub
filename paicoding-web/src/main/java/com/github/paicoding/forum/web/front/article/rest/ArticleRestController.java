@@ -13,6 +13,7 @@ import com.github.paicoding.forum.api.model.vo.article.ContentPostReq;
 import com.github.paicoding.forum.api.model.vo.article.dto.ArticleDTO;
 import com.github.paicoding.forum.api.model.vo.article.dto.CategoryDTO;
 import com.github.paicoding.forum.api.model.vo.article.dto.TagDTO;
+import com.github.paicoding.forum.api.model.vo.article.summary.ArticleSummaryResVo;
 import com.github.paicoding.forum.api.model.vo.constants.StatusEnum;
 import com.github.paicoding.forum.api.model.vo.user.dto.BaseUserInfoDTO;
 import com.github.paicoding.forum.core.mdc.MdcDot;
@@ -27,6 +28,7 @@ import com.github.paicoding.forum.service.article.service.CategoryService;
 import com.github.paicoding.forum.service.article.service.TagService;
 import com.github.paicoding.forum.service.user.service.UserFootService;
 import com.github.paicoding.forum.service.user.service.UserService;
+import com.github.paicoding.forum.service.article.service.summary.ArticleSummaryService;
 import com.github.paicoding.forum.web.component.TemplateEngineHelper;
 import com.github.paicoding.forum.web.front.article.vo.ArticleDetailVo;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +77,9 @@ public class ArticleRestController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ArticleSummaryService articleSummaryService;
 
     /**
      * 文章详情页
@@ -128,6 +133,14 @@ public class ArticleRestController {
     @PostMapping(path = "generateSummary")
     public ResVo<String> generateSummary(@RequestBody ContentPostReq req) {
         return ResVo.ok(articleService.generateSummary(req.getContent()));
+    }
+
+    /**
+     * 文章右侧AI总结卡片
+     */
+    @GetMapping(path = "summary/card")
+    public ResVo<ArticleSummaryResVo> queryArticleSummary(@RequestParam("articleId") Long articleId) {
+        return ResVo.ok(articleSummaryService.getOrGenerateSummary(articleId));
     }
 
     /**
