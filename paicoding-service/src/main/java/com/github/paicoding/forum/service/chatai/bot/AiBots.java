@@ -90,13 +90,13 @@ public class AiBots {
         return botService.getBotEnumByUserId(bot);
     }
 
-    public void trigger(AiBotEnum bot, String question, String sourceBizId, Consumer<String> consumer,
+    public void trigger(AiBotEnum bot, String question, String sourceBizId, Long fromUserId, Consumer<String> consumer,
                         Supplier<String> systemPromptGenerator, Supplier<String> ragContextGenerator) {
         String systemPrompt = systemPromptGenerator.get();
         String ragContext = ragContextGenerator == null ? "" : ragContextGenerator.get();
         // 支持自定义的ai机器人系统提示词注入
         systemPromptCache.put(ImmutablePair.of(bot, sourceBizId), () -> systemPrompt);
         // 触发AI机器人的交互
-        botService.trigger(bot, question, sourceBizId, systemPrompt, ragContext, consumer);
+        botService.trigger(bot, question, sourceBizId, fromUserId, systemPrompt, ragContext, consumer);
     }
 }

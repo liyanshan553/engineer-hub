@@ -186,6 +186,7 @@ public class CommentWriteServiceImpl implements CommentWriteService {
             AiBotEnum finalBotEnum = botEnum;
             aiBots.trigger(botEnum, initQAUserPrompt(botEnum, comment)
                     , "comment:" + topCommentId + "_" + comment.getUserId()
+                    , comment.getUserId()
                     , reply -> aiReply(finalBotEnum, reply, comment)
                     , initQABotSystemPrompt(botEnum)
                     , initQABotRagContext(botEnum, comment));

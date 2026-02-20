@@ -1,5 +1,6 @@
 package com.github.paicoding.forum.service.chatai.springai;
 
+import com.github.paicoding.forum.core.cache.RedisClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.function.Consumer;
 
 /**
@@ -27,12 +29,15 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class SpringAiBotService {
     private static final int RAG_TOP_K = 4;
+    private static final int MAX_HISTORY_ITEMS = 200;
+    private static final long HISTORY_EXPIRE_SECONDS = 7 * 24 * 3600L;
 
     private final ChatClient.Builder chatClientBuilder;
     private final EmbeddingModel embeddingModel;
 
-    public void ask(String sourceBizId, String systemPrompt, String userQuestion, String ragContext, Consumer<String> consumer) {
-        String finalSystemPrompt = buildRagSystemPrompt(sourceBizId, systemPrompt, userQuestion, ragContext);
+    public void ask(String sourceBizId, Long fromUserId, Long botUserId, String systemPrompt,
+                    String userQuestion, String ragContext, Consumer<String> consumer) {
+        String finalSystemPrompt = buildRagSystemPrompt(sourceBizId, fromUserId, botUserId, systemPrompt, userQuestion, ragContext);
 
         ChatClient.CallResponseSpec spec = chatClientBuilder.build()
                 .prompt()
@@ -42,15 +47,19 @@ public class SpringAiBotService {
 
         String content = spec.content();
         if (StringUtils.isNotBlank(content)) {
-            consumer.accept(content.trim());
+            String answer = content.trim();
+            consumer.accept(answer);
+            saveConversation(sourceBizId, fromUserId, botUserId, userQuestion, answer);
         } else {
             log.warn("spring-ai 评论机器人返回空内容, sourceBizId={}", sourceBizId);
         }
     }
 
-    private String buildRagSystemPrompt(String sourceBizId, String systemPrompt, String userQuestion, String ragContext) {
+    private String buildRagSystemPrompt(String sourceBizId, Long fromUserId, Long botUserId, String systemPrompt,
+                                        String userQuestion, String ragContext) {
+        String historyContext = buildHistoryContext(sourceBizId, fromUserId, botUserId);
         if (StringUtils.isBlank(ragContext)) {
-            return systemPrompt;
+            return appendHistoryContext(systemPrompt, historyContext);
         }
 
         List<Document> docs = splitDocuments(ragContext, sourceBizId);
@@ -66,7 +75,7 @@ public class SpringAiBotService {
                 .topK(RAG_TOP_K)
                 .build());
         if (searchResult == null || searchResult.isEmpty()) {
-            return systemPrompt;
+            return appendHistoryContext(systemPrompt, historyContext);
         }
 
         StringBuilder ref = new StringBuilder();
@@ -78,10 +87,43 @@ public class SpringAiBotService {
         }
 
         if (ref.length() == 0) {
-            return systemPrompt;
+            return appendHistoryContext(systemPrompt, historyContext);
         }
 
-        return systemPrompt + "\n\n请优先基于以下检索到的参考片段回答（RAG上下文）：\n" + ref;
+        String ragPrompt = systemPrompt + "\n\n请优先基于以下检索到的参考片段回答（RAG上下文）：\n" + ref;
+        return appendHistoryContext(ragPrompt, historyContext);
+    }
+
+    private String appendHistoryContext(String systemPrompt, String historyContext) {
+        if (StringUtils.isBlank(historyContext)) {
+            return systemPrompt;
+        }
+        return systemPrompt + "\n\n以下是该用户与机器人此前的完整对话记录，请保持上下文连续性：\n" + historyContext;
+    }
+
+    private String buildHistoryContext(String sourceBizId, Long fromUserId, Long botUserId) {
+        List<BotChatRecord> records = RedisClient.lRange(buildHistoryKey(fromUserId, botUserId), 0, MAX_HISTORY_ITEMS, BotChatRecord.class);
+        if (records == null || records.isEmpty()) {
+            return "";
+        }
+
+        String history = records.stream()
+                .map(record -> "用户: " + record.getQuestion() + "\n机器人: " + record.getAnswer())
+                .collect(Collectors.joining("\n\n"));
+        log.debug("加载历史对话 sourceBizId={}, fromUserId={}, botUserId={}, size={}", sourceBizId, fromUserId, botUserId, records.size());
+        return history;
+    }
+
+    private void saveConversation(String sourceBizId, Long fromUserId, Long botUserId, String question, String answer) {
+        String key = buildHistoryKey(fromUserId, botUserId);
+        RedisClient.rPush(key, new BotChatRecord().setQuestion(question).setAnswer(answer));
+        RedisClient.lTrim(key, -MAX_HISTORY_ITEMS, -1);
+        RedisClient.expire(key, HISTORY_EXPIRE_SECONDS);
+        log.debug("保存历史对话 sourceBizId={}, fromUserId={}, botUserId={}", sourceBizId, fromUserId, botUserId);
+    }
+
+    private String buildHistoryKey(Long fromUserId, Long botUserId) {
+        return "chat.bot.history." + fromUserId + "." + botUserId;
     }
 
     private List<Document> splitDocuments(String ragContext, String sourceBizId) {
@@ -104,5 +146,12 @@ public class SpringAiBotService {
         }
         log.debug("RAG文档切分完成 sourceBizId={}, chunkCnt={}", sourceBizId, docs.size());
         return docs;
+    }
+
+    @lombok.Data
+    @lombok.experimental.Accessors(chain = true)
+    private static class BotChatRecord {
+        private String question;
+        private String answer;
     }
 }
