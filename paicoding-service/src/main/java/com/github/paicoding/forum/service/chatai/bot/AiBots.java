@@ -91,9 +91,10 @@ public class AiBots {
     }
 
     public void trigger(AiBotEnum bot, String question, String sourceBizId, Consumer<String> consumer, Supplier<String> systemPromptGenerator) {
+        String systemPrompt = systemPromptGenerator.get();
         // 支持自定义的ai机器人系统提示词注入
-        systemPromptCache.put(ImmutablePair.of(bot, sourceBizId), systemPromptGenerator);
+        systemPromptCache.put(ImmutablePair.of(bot, sourceBizId), () -> systemPrompt);
         // 触发AI机器人的交互
-        botService.trigger(bot, question, sourceBizId, consumer);
+        botService.trigger(bot, question, sourceBizId, systemPrompt, consumer);
     }
 }

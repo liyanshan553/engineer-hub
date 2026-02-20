@@ -23,8 +23,9 @@
     <description>simple forum by java &amp; spring</description>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <guava.version>31.1-jre</guava.version>
         <mybaits-plus.version>3.5.2</mybaits-plus.version>
         <aliyun-sdk-oss.version>3.17.2</aliyun-sdk-oss.version>
@@ -42,6 +43,7 @@
         <sensitive.version>0.8.0</sensitive.version>
         <jwt.version>4.4.0</jwt.version>
         <fastexcel.version>1.0.0</fastexcel.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -164,6 +166,14 @@
                 <groupId>cn.idev.excel</groupId>
                 <artifactId>fastexcel</artifactId>
                 <version>${fastexcel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
         </dependencies>
