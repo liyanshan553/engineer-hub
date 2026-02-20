@@ -16,11 +16,6 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class SpringAiBotService {
     private final ChatClient.Builder chatClientBuilder;
-    private final AiBotSpringAiProperties springAiProperties;
-
-    public boolean enabled() {
-        return springAiProperties.isEnabled();
-    }
 
     public void ask(String systemPrompt, String userQuestion, Consumer<String> consumer) {
         ChatClient.CallResponseSpec spec = chatClientBuilder.build()

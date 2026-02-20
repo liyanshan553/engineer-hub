@@ -1,14 +1,10 @@
 package com.github.paicoding.forum.service.chatai.bot;
 
 import com.github.paicoding.forum.api.model.context.ReqInfoContext;
-import com.github.paicoding.forum.api.model.enums.ChatAnswerTypeEnum;
-import com.github.paicoding.forum.api.model.enums.ai.AISourceEnum;
 import com.github.paicoding.forum.api.model.enums.ai.AiBotEnum;
-import com.github.paicoding.forum.api.model.vo.chat.ChatItemVo;
 import com.github.paicoding.forum.api.model.vo.user.dto.BaseUserInfoDTO;
 import com.github.paicoding.forum.core.async.AsyncUtil;
 import com.github.paicoding.forum.core.util.SpringUtil;
-import com.github.paicoding.forum.service.chatai.ChatFacade;
 import com.github.paicoding.forum.service.chatai.springai.SpringAiBotService;
 import com.github.paicoding.forum.service.user.repository.dao.UserDao;
 import com.github.paicoding.forum.service.user.repository.entity.UserInfoDO;
@@ -32,9 +28,6 @@ import java.util.function.Consumer;
  */
 @Component
 public class AiBotService {
-
-    @Autowired
-    private ChatFacade chatFacade;
 
     @Autowired
     private SpringAiBotService springAiBotService;
@@ -93,20 +86,7 @@ public class AiBotService {
             ReqInfoContext.addReqInfo(reqInfo);
 
             try {
-                if (springAiBotService.enabled()) {
-                    springAiBotService.ask(systemPrompt, question, consumer);
-                    return;
-                }
-
-                // 兜底：未启用 spring-ai 时沿用旧链路
-                chatFacade.autoChat(AISourceEnum.ZHI_PU_AI, question, vo -> {
-                    ChatItemVo item = vo.getRecords().get(0);
-                    if (item.getAnswerType() == ChatAnswerTypeEnum.JSON
-                            || item.getAnswerType() == ChatAnswerTypeEnum.TEXT
-                            || item.getAnswerType() == ChatAnswerTypeEnum.STREAM_END) {
-                        consumer.accept(item.getAnswer());
-                    }
-                });
+                springAiBotService.ask(systemPrompt, question, consumer);
             } finally {
                 // 清空上下文信息
                 ReqInfoContext.clear();

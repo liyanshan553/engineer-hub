@@ -49,11 +49,6 @@ doubao:
   api-host: https://ark.cn-beijing.volces.com/api/v3
   end-point: # 使用自己创建的接入点进行替换
 
-ai:
-  bot:
-    spring-ai:
-      enabled: false
-      model: gpt-4o-mini
 
 spring:
   ai:
@@ -62,5 +57,5 @@ spring:
       api-key: ${deepseek.apiKey:}
       chat:
         options:
-          model: ${ai.bot.spring-ai.model:gpt-4o-mini}
+          model: deepseek-chat
 

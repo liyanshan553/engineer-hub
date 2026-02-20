@@ -20,10 +20,6 @@ ai:
     - CHAT_GPT_4
     - PAI_AI
     - XUN_FEI_AI
-  bot:
-    spring-ai:
-      enabled: false
-      model: gpt-4o-mini
 
 # chatgpt
 chatgpt:
@@ -81,4 +77,4 @@ spring:
       api-key: ${deepseek.apiKey:}
       chat:
         options:
-          model: ${ai.bot.spring-ai.model:gpt-4o-mini}
+          model: deepseek-chat
