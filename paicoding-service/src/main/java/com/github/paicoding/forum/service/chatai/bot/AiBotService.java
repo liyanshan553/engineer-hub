@@ -75,7 +75,8 @@ public class AiBotService {
      * @param question
      * @return
      */
-    public void trigger(AiBotEnum bot, String question, String sourceBizId, String systemPrompt, Consumer<String> consumer) {
+    public void trigger(AiBotEnum bot, String question, String sourceBizId, String systemPrompt,
+                        String ragContext, Consumer<String> consumer) {
         BaseUserInfoDTO user = botUsers.get(bot);
         AsyncUtil.execute(() -> {
             // 设置AI机器人问答上下文
@@ -86,7 +87,7 @@ public class AiBotService {
             ReqInfoContext.addReqInfo(reqInfo);
 
             try {
-                springAiBotService.ask(systemPrompt, question, consumer);
+                springAiBotService.ask(sourceBizId, systemPrompt, question, ragContext, consumer);
             } finally {
                 // 清空上下文信息
                 ReqInfoContext.clear();

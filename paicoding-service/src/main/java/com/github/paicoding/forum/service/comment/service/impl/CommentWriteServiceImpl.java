@@ -187,7 +187,8 @@ public class CommentWriteServiceImpl implements CommentWriteService {
             aiBots.trigger(botEnum, initQAUserPrompt(botEnum, comment)
                     , "comment:" + topCommentId + "_" + comment.getUserId()
                     , reply -> aiReply(finalBotEnum, reply, comment)
-                    , initQABotSystemPrompt(botEnum, comment));
+                    , initQABotSystemPrompt(botEnum)
+                    , initQABotRagContext(botEnum, comment));
             log.info("任务已完成提交~");
         }
     }
@@ -216,13 +217,22 @@ public class CommentWriteServiceImpl implements CommentWriteService {
      * @param comment 评论
      * @return 系统提示词
      */
-    private Supplier<String> initQABotSystemPrompt(AiBotEnum bot, CommentDO comment) {
+    private Supplier<String> initQABotSystemPrompt(AiBotEnum bot) {
+        return bot::getPrompt;
+    }
+
+    /**
+     * 初始化 RAG 检索上下文
+     *
+     * @param bot     机器人枚举
+     * @param comment 评论
+     * @return RAG 检索上下文；非 QA_BOT 返回空字符串
+     */
+    private Supplier<String> initQABotRagContext(AiBotEnum bot, CommentDO comment) {
         if (bot == AiBotEnum.QA_BOT) {
-            String article = articleReadService.queryArticleContentForAI(comment.getArticleId());
-            return () -> bot.getPrompt() + "\n\n" + article;
-        } else {
-            return bot::getPrompt;
+            return () -> articleReadService.queryArticleContentForAI(comment.getArticleId());
         }
+        return () -> "";
     }
 
     private void aiReply(AiBotEnum aiBot, String replyContent, CommentDO parentComment) {
