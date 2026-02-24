@@ -165,4 +165,9 @@
     <changeSet id="20260121_1" author="Qoder">
         <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/data/update_schema_260121.sql"/>
     </changeSet>
+
+    <!-- 新增文章AI总结表 -->
+    <changeSet id="20260220_1" author="Qoder">
+        <sqlFile dbms="mysql" endDelimiter=";" encoding="UTF-8" path="liquibase/data/update_schema_260220.sql"/>
+    </changeSet>
 </databaseChangeLog>

@@ -1,14 +1,11 @@
 package com.github.paicoding.forum.service.chatai.bot;
 
 import com.github.paicoding.forum.api.model.context.ReqInfoContext;
-import com.github.paicoding.forum.api.model.enums.ChatAnswerTypeEnum;
-import com.github.paicoding.forum.api.model.enums.ai.AISourceEnum;
 import com.github.paicoding.forum.api.model.enums.ai.AiBotEnum;
-import com.github.paicoding.forum.api.model.vo.chat.ChatItemVo;
 import com.github.paicoding.forum.api.model.vo.user.dto.BaseUserInfoDTO;
 import com.github.paicoding.forum.core.async.AsyncUtil;
 import com.github.paicoding.forum.core.util.SpringUtil;
-import com.github.paicoding.forum.service.chatai.ChatFacade;
+import com.github.paicoding.forum.service.chatai.springai.SpringAiBotService;
 import com.github.paicoding.forum.service.user.repository.dao.UserDao;
 import com.github.paicoding.forum.service.user.repository.entity.UserInfoDO;
 import com.github.paicoding.forum.service.user.service.RegisterService;
@@ -33,7 +30,7 @@ import java.util.function.Consumer;
 public class AiBotService {
 
     @Autowired
-    private ChatFacade chatFacade;
+    private SpringAiBotService springAiBotService;
 
     @Autowired
     private UserService userService;
@@ -78,7 +75,8 @@ public class AiBotService {
      * @param question
      * @return
      */
-    public void trigger(AiBotEnum bot, String question, String sourceBizId, Consumer<String> consumer) {
+    public void trigger(AiBotEnum bot, String question, String sourceBizId, Long fromUserId, String systemPrompt,
+                        String ragContext, Consumer<String> consumer) {
         BaseUserInfoDTO user = botUsers.get(bot);
         AsyncUtil.execute(() -> {
             // 设置AI机器人问答上下文
@@ -88,20 +86,12 @@ public class AiBotService {
             reqInfo.setChatId(sourceBizId);
             ReqInfoContext.addReqInfo(reqInfo);
 
-            // 机器人，默认使用智谱模型
-            chatFacade.autoChat(AISourceEnum.ZHI_PU_AI, question, vo -> {
-                ChatItemVo item = vo.getRecords().get(0);
-                if (item.getAnswerType() == ChatAnswerTypeEnum.JSON
-                        || item.getAnswerType() == ChatAnswerTypeEnum.TEXT
-                        || item.getAnswerType() == ChatAnswerTypeEnum.STREAM_END) {
-                    try {
-                        consumer.accept(item.getAnswer());
-                    } finally {
-                        // 清空上下文信息
-                        ReqInfoContext.clear();
-                    }
-                }
-            });
+            try {
+                springAiBotService.ask(sourceBizId, fromUserId, user.getUserId(), systemPrompt, question, ragContext, consumer);
+            } finally {
+                // 清空上下文信息
+                ReqInfoContext.clear();
+            }
         });
     }
 

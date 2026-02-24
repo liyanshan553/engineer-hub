@@ -10,6 +10,7 @@
   <script src="/js/biz/highlightcomment.js" th:src="${global.siteInfo.oss + '/js/biz/highlightcomment.js'}"></script>
   <script src="/js/biz/ai-comment.js" th:src="${global.siteInfo.oss + '/js/biz/ai-comment.js'}"></script>
   <script src="/js/biz/comment-markdown.js" th:src="${global.siteInfo.oss + '/js/biz/comment-markdown.js'}"></script>
+  <script src="/js/biz/article-summary.js" th:src="${global.siteInfo.oss + '/js/biz/article-summary.js'}"></script>
 
   <body id="body" class="bg-color">
     <!-- 导航栏 -->
@@ -59,6 +60,19 @@
               </div>
             </div>
             <div id="toc-container-position"></div>
+
+            <!-- AI 总结卡片 -->
+            <div class="right-container">
+              <div class="widget" id="articleSummaryCard">
+                <h3 class="com-nav-bar-title">AI总结卡片</h3>
+                <div id="summaryInitState">
+                  <button id="generateSummaryBtn" class="c-btn c-btn-primary" type="button">生成总结</button>
+                </div>
+                <div id="summaryLoadingState" style="display:none; color:#999;">正在生成总结，请稍候...</div>
+                <div id="summaryContent" style="display:none;"></div>
+              </div>
+            </div>
+
             <!-- 文章目录  -->
             <div class="right-container toc-container">
               <div class="widget">

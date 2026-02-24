@@ -69,3 +69,12 @@ doubao:
 logging:
   level:
     com.github.paicoding.forum.service.chatai.service.impl.deepseek.DeepSeekChatServiceImpl: DEBUG # 本地启动时，开启debug日志
+
+spring:
+  ai:
+    openai:
+      base-url: ${deepseek.apiHost:https://api.deepseek.com}
+      api-key: ${deepseek.apiKey:}
+      chat:
+        options:
+          model: deepseek-chat
