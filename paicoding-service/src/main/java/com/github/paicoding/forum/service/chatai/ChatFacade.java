@@ -93,6 +93,8 @@ public class ChatFacade {
                 source = AISourceEnum.DEEP_SEEK;
             } else if(!except.contains(AISourceEnum.DOU_BAO_AI)) {
                 source = AISourceEnum.DOU_BAO_AI;
+            } else if(!except.contains(AISourceEnum.SPRING_AI)) {
+                source = AISourceEnum.SPRING_AI;
             } else {
                 source = AISourceEnum.PAI_AI;
             }

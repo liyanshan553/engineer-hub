@@ -50,7 +50,11 @@ public enum AISourceEnum {
     /**
      * 豆包 AI
      */
-    DOU_BAO_AI(7, "豆包")
+    DOU_BAO_AI(7, "豆包"),
+    /**
+     * Spring AI (阿里云百炼大模型 + Function Calling)
+     */
+    SPRING_AI(8, "SpringAI")
     ;
 
 
